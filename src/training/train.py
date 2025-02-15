@@ -363,14 +363,14 @@ def main() -> None:
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.INFO)
 
-    # Load config from YAML (provide path to your config file here)
+    # Load config from YAML
     yaml_path = "config.yaml"
     config = load_config(yaml_path, default_config, logger)
 
     # Create a unique run directory
     run_dir = create_run_directory(base_dir=config["train"]["output_dir"])
 
-    # save the final, merged config to the run directory
+    # Save the final, merged config to the run directory
     used_config_path = os.path.join(run_dir, "config_used.yaml")
     save_config(config, used_config_path)
     logger.info(f"Saved the used config to {used_config_path}")
