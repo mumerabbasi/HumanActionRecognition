@@ -19,7 +19,6 @@ This dataset was collected using **8 synchronized Intel RealSense D435i cameras*
 This dataset is ideal for:
 - Multi-view action recognition
 - 3D pose estimation
-- Computer vision applications
 - **Furniture assembly analysis**
 
 🚀 **Start exploring and building with this dataset!**
