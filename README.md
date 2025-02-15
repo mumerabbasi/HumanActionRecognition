@@ -1,4 +1,4 @@
-# Multi-View Furniture Assembly Action Dataset
+# Multi-View Furniture Assembly Action Segmentation
 
 This repository hosts a **multi-view dataset** collected specifically for **human action segmentation** tasks in the domain of **furniture assembly**. The dataset is captured from **8 synchronized Intel RealSense D435i cameras**, providing multiple viewpoints for each recorded action sequence.
 
