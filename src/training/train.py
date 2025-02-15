@@ -16,12 +16,14 @@ class Trainer:
     def __init__(self, config):
         """
         Initialize the Trainer class with the provided configuration.
-        
+
         Args:
             config (dict): Configuration for the training process.
         """
         self.config = config
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device(
+            'cuda' if torch.cuda.is_available() else 'cpu'
+            )
         self.logger = setup_logger('training_log', 'training.log')
 
         # Initialize wandb for logging
@@ -46,7 +48,7 @@ class Trainer:
     def get_dataloaders(self):
         """
         Initialize the training and validation data loaders.
-        
+
         Returns:
             tuple: Training and validation dataloaders.
         """
@@ -74,10 +76,10 @@ class Trainer:
     def train_one_epoch(self, epoch):
         """
         Train the model for one epoch.
-        
+
         Args:
             epoch (int): Current epoch number.
-        
+
         Returns:
             float: Training loss for the epoch.
         """
@@ -118,13 +120,13 @@ class Trainer:
 
         self.logger.info(f"Epoch [{epoch+1}/{self.config['num_epochs']}], "
                          f"Train Loss: {epoch_loss:.4f}, Train Accuracy: {epoch_accuracy:.2f}%")
-        
+
         return epoch_loss
 
     def validate(self):
         """
         Validate the model on the validation set.
-        
+
         Returns:
             tuple: Validation loss and accuracy.
         """
@@ -156,11 +158,11 @@ class Trainer:
         Full training loop with validation and checkpointing.
         """
         best_val_loss = float('inf')
-        
+
         for epoch in range(self.config['num_epochs']):
             # Train for one epoch
             train_loss = self.train_one_epoch(epoch)
-            
+
             # Validate the model
             val_loss, val_accuracy = self.validate()
 
