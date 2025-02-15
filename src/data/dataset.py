@@ -10,13 +10,16 @@ class MultiviewActionDataset(Dataset):
     """
     Custom Dataset for Multiview Action Recognition.
 
-    Args:
-        data_dir (str): Path to the processed dataset directory
-            (e.g., 'data/processed').
-        transform (callable, optional): A function/transform that takes in an
-            image and returns a transformed version.
-        seq_len (int, optional): Fixed length for sequences. Default is None
-            (uses original length).
+    Parameters
+    ----------
+    data_dir : str
+        Path to the processed dataset directory (e.g., 'data/processed').
+    transform : callable, optional
+        A function/transform that takes in an image and returns a transformed
+        version.
+    seq_len : int, optional
+        Fixed length for sequences. If None, the original sequence length is
+        used (default is None).
     """
     def __init__(self, data_dir, transform=None, seq_len=None):
         self.data_dir = data_dir
@@ -28,16 +31,16 @@ class MultiviewActionDataset(Dataset):
         # Create a mapping from action labels (strings) to integers
         self.action_to_idx = {action: idx for idx,
                               action in enumerate(self.actions)}
-
         self.data = self._load_dataset()
 
     def _load_dataset(self):
         """
-        Internal method to load the dataset paths into memory.
-        Collects file paths of all frames for each sequence from each view.
+        Loads the dataset paths into memory.
 
-        Returns:
-            List of tuples in the format (action, sequence_id, view_paths)
+        Returns
+        -------
+        list of tuple
+            List of tuples in the format (action, sequence_id, view_paths).
         """
         data = []
         for action in self.actions:
@@ -50,17 +53,30 @@ class MultiviewActionDataset(Dataset):
         return data
 
     def __len__(self):
+        """
+        Returns the total number of sequences in the dataset.
+
+        Returns
+        -------
+        int
+            The total number of sequences.
+        """
         return len(self.data)
 
     def _load_images(self, view_paths):
         """
-        Internal method to load images for all views of a single sequence.
+        Loads images for all views of a single sequence.
 
-        Args:
-            view_paths (list): List of paths for each view in the sequence.
+        Parameters
+        ----------
+        view_paths : list of str
+            List of paths for each view in the sequence.
 
-        Returns:
-            List of tensors for each view (one tensor per view).
+        Returns
+        -------
+        torch.Tensor
+            Tensor of shape (num_views, seq_len, C, H, W), where num_views is
+            the number of views.
         """
         images_per_view = []
         for view_path in view_paths:
@@ -68,32 +84,29 @@ class MultiviewActionDataset(Dataset):
             if self.seq_len and self.seq_len <= len(frames):
                 frames = frames[:self.seq_len]
             images = [Image.open(frame) for frame in frames]
-            if self.transform:
-                images = [self.transform(image) for image in images]
-            else:
-                images = [transforms.ToTensor()(image) for image in images]
-            # Shape: [seq_len, C, H, W]
+            images = [self.transform(image) if self.transform
+                      else transforms.ToTensor()(image) for image in images]
             images_per_view.append(torch.stack(images))
-
-        # Stack views into a single tensor, adding a view dimension
-        # Shape: [num_views, seq_len, C, H, W]
         return torch.stack(images_per_view, dim=0)
 
     def __getitem__(self, idx):
         """
         Fetches the data at the specified index.
 
-        Args:
-            idx (int): Index for the item to fetch.
+        Parameters
+        ----------
+        idx : int
+            Index for the item to fetch.
 
-        Returns:
-            dict: Contains action label, sequence ID, and view frames.
+        Returns
+        -------
+        tuple
+            A tuple containing:
+                - torch.Tensor: View frames of shape
+                (num_views, seq_len, C, H, W).
+                - torch.Tensor: Corresponding action index.
         """
         action, seq, view_paths = self.data[idx]
         views = self._load_images(view_paths)
-
-        # Convert action string to the corresponding integer
         action_idx = torch.tensor(self.action_to_idx[action])
-
-        # List of [seq_len, C, H, W] for each view
         return views, action_idx

@@ -5,12 +5,12 @@ from torchvision.models import efficientnet_v2_s, EfficientNet_V2_S_Weights
 
 class SpatialFeatureExtractor(nn.Module):
     """
-    Spatial Feature Extractor block with EfficientNetV2-S.
+    Spatial Feature Extractor block using EfficientNetV2-S.
 
-    Args:
-        num_views (int): Number of views in the input (e.g., 8 views).
-        num_heads (int): Number of attention heads.
-        pretrained (bool): Whether to use a pretrained EfficientNetV2-S model.
+    Parameters
+    ----------
+    pretrained : bool, optional
+        Whether to use a pretrained EfficientNetV2-S model (default is True).
     """
     def __init__(self, pretrained=True):
         super(SpatialFeatureExtractor, self).__init__()
@@ -19,22 +19,18 @@ class SpatialFeatureExtractor(nn.Module):
         weights = EfficientNet_V2_S_Weights.DEFAULT if pretrained else None
         self.efficient_net = efficientnet_v2_s(weights=weights)
 
-        # Remove the classification head (we only need the feature extractor)
+        # Remove the classification head (retain feature extractor)
         self.feature_extractor = nn.Sequential(*list(
             self.efficient_net.children())[:-1]
-            )  # Removes the last FC layer
+        )
 
-        # Freeze all layers of the feature extractor except the last conv
-        #   block to finetune it
-        # Freeze all layers
+        # Freeze all layers except the last convolutional block
         for param in self.feature_extractor.parameters():
             param.requires_grad = False
-        # Unfreeze the last conv block
         for param in self.feature_extractor[-1].parameters():
             param.requires_grad = True
 
-        # Dynamically determine embedding dimension (output feature dimension)
-        #   using a dummy input
+        # Determine embedding dimension dynamically using a dummy input
         dummy_input = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
             dummy_output = self.feature_extractor(dummy_input)
@@ -44,27 +40,28 @@ class SpatialFeatureExtractor(nn.Module):
         """
         Forward pass through the spatial feature extractor.
 
-        Args:
-            x (Tensor): Input tensor of shape [batch_size, num_views, C, H, W].
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor of shape (batch_size, num_views, seq_len, C, H, W).
 
-        Returns:
-            Tensor: Extracted features with attention applied,
-                    shape [batch_size, num_views, embed_dim].
+        Returns
+        -------
+        torch.Tensor
+            Extracted features of shape
+            (batch_size, num_views, seq_len, embed_dim).
         """
         batch_size, num_views, seq_len, C, H, W = x.shape
 
-        # Combine batch_size and num_views into a single dimension
+        # Reshape input for processing
         x = x.view(batch_size * num_views * seq_len, C, H, W)
 
-        # Pass the combined tensor through the feature extractor
-        # Shape [batch_size * num_views * seq_len, embed_dim, 1, 1] after
-        #   EfficientNetV2-S
+        # Extract features using EfficientNetV2-S
         features = self.feature_extractor(x)
-        # Shape [batch_size * num_views, embed_dim]
+        # Remove spatial dimensions
         features = features.squeeze(-1).squeeze(-1)
 
-        # Reshape the features back to [batch_size, num_views, embed_dim]
-        # Shape [batch_size, num_views, embed_dim]
+        # Reshape features back to original batch structure
         features = features.view(batch_size, num_views, seq_len, -1)
 
-        return features  # Shape [batch_size, num_views, seq_len, embed_dim]
+        return features
