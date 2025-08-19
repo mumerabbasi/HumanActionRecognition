@@ -10,7 +10,7 @@ This dataset and associated code were developed as part of the **Projektpraktiku
 
 - **5 different actions** related to furniture assembly.  
 - Each action sequence has **8 distinct camera views**.  
-- Annotations are provided for **View 5** (using the VGG Annotator tool), which align directly with frames in other views.
+- Annotations are provided for **View 5**, which align directly with frames in other views.
 
 ## Spatio-Temporal Action Recognition Model
 
