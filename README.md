@@ -30,7 +30,7 @@ Spatio-temporal action recognition for furniture assembly using synchronized mul
 
 ## Demo
 
-https://github.com/user-attachments/assets/467a44e0-25d8-4abc-826b-d331d425fe9f
+https://github.com/user-attachments/assets/73bbcf50-aa8f-42f1-9c3b-5acc45cf4e68
 
 The local demo asset is kept in [`assets/HAU_demo.mp4`](assets/HAU_demo.mp4).
 
