@@ -1,7 +1,6 @@
 <div align="center">
 
-# Multi-View Human Action Recognition for Furniture Assembly
-
+# Multi-View Furniture Assembly Human Action Recognition 
 Spatio-temporal action recognition for furniture assembly using synchronized multi-camera RGB video, ResNet-50 spatial features, view attention, and a temporal Transformer classifier.
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)
@@ -30,7 +29,7 @@ Spatio-temporal action recognition for furniture assembly using synchronized mul
 
 ## Demo
 
-https://github.com/user-attachments/assets/4519c3f3-c9d1-45ae-8ea3-ed147879c089
+https://github.com/user-attachments/assets/1338eb24-245e-4dfc-b77d-1aadb9dfff61
 
 The local demo asset is kept in [`assets/HAU_demo.mp4`](assets/HAU_demo.mp4).
 
@@ -49,29 +48,43 @@ The model predicts a frame-sequence action label by:
 
 ---
 
-## Model Architecture
+## Architecture
 
 ```
-8 synchronized camera views
-        |
-        v
-RGB frame sequences per view
-        |
-        v
-ResNet-50 spatial encoder
-2048-dim pooled features per frame
-        |
-        v
-Multi-head view attention
-        |
-        v
-Temporal Transformer encoder
-        |
-        v
-Mean pooling over time and views
-        |
-        v
-Action classifier
+        ┌─────────────────────────────────────┐
+        │  8 Synchronized Camera Views        │
+        │  Intel RealSense D435i Streams      │
+        └──────────────────┬──────────────────┘
+                           │ RGB frame sequences
+                           ▼
+        ┌─────────────────────────────────────┐
+        │  ResNet-50 Spatial Encoder          │
+        │  2048-dim pooled frame features     │
+        └──────────────────┬──────────────────┘
+                           │ Per-view embeddings
+                           ▼
+        ┌─────────────────────────────────────┐
+        │  Multi-Head View Attention          │
+        │  Cross-view feature fusion          │
+        └──────────────────┬──────────────────┘
+                           │ View-aware sequence features
+                           ▼
+        ┌─────────────────────────────────────┐
+        │  Temporal Transformer Encoder       │
+        │  Action dynamics over time          │
+        └──────────────────┬──────────────────┘
+                           │ Temporal representations
+                           ▼
+        ┌─────────────────────────────────────┐
+        │  Mean Pooling Across Time & Views   │
+        │  Sequence-level representation      │
+        └──────────────────┬──────────────────┘
+                           │ Classification head input
+                           ▼
+        ┌─────────────────────────────────────┐
+        │  Action Classifier                  │
+        │  Furniture assembly prediction      │
+        └─────────────────────────────────────┘
 ```
 
 The public model APIs are:
