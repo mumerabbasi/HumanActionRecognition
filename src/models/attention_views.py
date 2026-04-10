@@ -49,6 +49,6 @@ class MultiHeadAttentionOnViews(nn.Module):
         attn_output = attn_output.view(
             batch_size, seq_len, num_views, embed_dim
         )
-        attn_output = attn_output.permute(0, 2, 1, 3)
+        attn_output = attn_output.permute(0, 2, 1, 3).contiguous()
 
         return attn_output

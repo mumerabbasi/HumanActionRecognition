@@ -1,4 +1,5 @@
 import logging
+import os
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -13,12 +14,18 @@ def setup_logger(name, log_file, level=logging.INFO):
     Returns:
         logging.Logger: Configured logger instance.
     """
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
     logger = logging.getLogger(name)
     logger.setLevel(level)
+    logger.propagate = False
+
+    if logger.handlers:
+        logger.handlers.clear()
 
     # File handler
     file_handler = logging.FileHandler(log_file)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
 
     # Stream handler

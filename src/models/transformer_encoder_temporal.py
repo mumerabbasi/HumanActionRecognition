@@ -51,12 +51,12 @@ class TemporalTransformerBlock(nn.Module):
 
         # Reshape input to combine batch_size and num_views for
         # temporal modeling
-        x = x.view(batch_size * num_views, seq_len, embed_dim)
+        x = x.reshape(batch_size * num_views, seq_len, embed_dim)
 
         # Apply transformer encoder on the temporal dimension
         x = self.transformer_encoder(x)
 
         # Reshape back to original dimensions
-        x = x.view(batch_size, num_views, seq_len, embed_dim)
+        x = x.reshape(batch_size, num_views, seq_len, embed_dim)
 
         return x

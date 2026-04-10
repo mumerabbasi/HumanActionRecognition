@@ -1,3 +1,39 @@
 *.jpg
 *.ini
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments and local secrets
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Notebooks
+.ipynb_checkpoints/
 temp.ipynb
+
+# Dataset material
+data/raw/
+data/processed/
+data/interim/
+
+# Training and evaluation outputs
+output/
+outputs/
+checkpoints/
+logs/
+wandb/
+*.log
+*.pt
+*.pth
+*.ckpt

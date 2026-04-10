@@ -1,8 +1,9 @@
+from copy import deepcopy
+from datetime import datetime
 import os
-import datetime
 
-import yaml
 import torch
+import yaml
 
 
 def create_run_directory(base_dir="output/models"):
@@ -69,27 +70,28 @@ def load_config(yaml_path, default_config, logger):
             f"YAML configuration file not found at {yaml_path}. "
             "Using default configuration."
         )
-        return default_config
+        return deepcopy(default_config)
 
     with open(yaml_path, "r", encoding="utf-8") as file:
         user_config = yaml.safe_load(file) or {}
 
-    # Merge model configs
-    merged_model_config = {
-        **default_config["model"],
-        **user_config.get("model", {}),
-    }
+    if not isinstance(user_config, dict):
+        raise ValueError(f"YAML configuration at {yaml_path} must be a map.")
 
-    # Merge training configs
-    merged_train_config = {
-        **default_config["train"],
-        **user_config.get("train", {}),
-    }
+    merged_config = deepcopy(default_config)
+    for section, values in user_config.items():
+        if (
+            section in merged_config
+            and isinstance(merged_config[section], dict)
+            and isinstance(values, dict)
+        ):
+            merged_config[section] = {
+                **merged_config[section],
+                **values,
+            }
+        else:
+            merged_config[section] = values
 
-    merged_config = {
-        "model": merged_model_config,
-        "train": merged_train_config,
-    }
     return merged_config
 
 
@@ -116,45 +118,3 @@ def save_checkpoint(filepath, model, optimizer, loss):
         },
         filepath,
     )
-
-
-def load_checkpoint(filepath, model, optimizer):
-    """
-    Load a model checkpoint.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to load the checkpoint from.
-    model : torch.nn.Module
-        The model to load the state into.
-    optimizer : torch.optim.Optimizer
-        The optimizer to load the state into.
-
-    Returns
-    -------
-    float
-        The validation loss at the time of saving.
-    """
-    checkpoint = torch.load(filepath, map_location="cpu")
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    return checkpoint["loss"]
-
-
-def get_lr(optimizer):
-    """
-    Get the current learning rate from the optimizer.
-
-    Parameters
-    ----------
-    optimizer : torch.optim.Optimizer
-        The optimizer to extract the learning rate from.
-
-    Returns
-    -------
-    float
-        The current learning rate of the optimizer.
-    """
-    for param_group in optimizer.param_groups:
-        return param_group['lr']

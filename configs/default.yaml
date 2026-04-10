@@ -1,17 +1,29 @@
 model:
   num_heads: 8
+  pretrained_spatial_feature_extractor: true
   num_transformer_layers: 4
-  num_classes: 20
+  num_classes: 6
 
 train:
   batch_size: 16
   num_epochs: 100
   learning_rate: 0.0002
   seq_len: 60
+  data_dir: "data/processed"
+  num_workers: 4
   log_interval: 5
-  wandb: "yes"
+  wandb: "no"
   early_stopping: "yes"
   early_stopping_patience: 15
   lr_scheduler_patience: 10
   weight_decay: 0.0001
   output_dir: "output/custom_models"
+
+evaluate:
+  batch_size: 16
+  seq_len: 60
+  data_dir: "data/processed"
+  split: "test"
+  num_workers: 4
+  wandb: "no"
+  output_dir: "output/evaluation_results"

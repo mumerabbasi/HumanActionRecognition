@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 
@@ -7,16 +8,19 @@ import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
-from torchvision import transforms
 
 from src.data.dataset import MultiviewActionDataset
+from src.data.transforms import get_train_transforms, get_val_transforms
 from src.models.multiview_action_recognition_model import (
     MultiviewActionRecognitionModel,
 )
-from utils.logger import setup_logger
-from utils.helper import (
-    create_run_directory, save_checkpoint, load_config, save_config
+from src.utils.helper import (
+    create_run_directory,
+    load_config,
+    save_checkpoint,
+    save_config,
 )
+from src.utils.logger import setup_logger
 
 
 class Trainer:
@@ -81,7 +85,9 @@ class Trainer:
         ))
 
         # Check if wandb is enabled
-        self.use_wandb = self.train_config.get("wandb", "no").lower() == "yes"
+        self.use_wandb = (
+            str(self.train_config.get("wandb", "no")).lower() == "yes"
+        )
         if self.use_wandb:
             wandb.init(project="multiview-action-recognition", config={
                 "train": self.train_config,
@@ -104,6 +110,9 @@ class Trainer:
         # Initialize the model
         self.model = MultiviewActionRecognitionModel(
             num_heads=self.model_config["num_heads"],
+            pretrained_spatial_feature_extractor=self.model_config.get(
+                "pretrained_spatial_feature_extractor", True
+            ),
             num_transformer_layers=self.model_config["num_transformer_layers"],
             num_classes=self.model_config["num_classes"],
         ).to(self.device)
@@ -130,7 +139,6 @@ class Trainer:
             mode="min",
             patience=lr_scheduler_patience,
             factor=0.1,
-            verbose=True
         )
 
     def get_dataloaders(self) -> tuple:
@@ -143,21 +151,18 @@ class Trainer:
             A tuple containing the training DataLoader and validation
             DataLoader.
         """
-        transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-        ])
-
         seq_len = self.train_config.get("seq_len", 50)
+        data_dir = self.train_config.get("data_dir", "data/processed")
+        num_workers = self.train_config.get("num_workers", 4)
 
         train_dataset = MultiviewActionDataset(
-            data_dir="data/processed/train",
-            transform=transform,
+            data_dir=os.path.join(data_dir, "train"),
+            transform=get_train_transforms(),
             seq_len=seq_len
         )
         val_dataset = MultiviewActionDataset(
-            data_dir="data/processed/val",
-            transform=transform,
+            data_dir=os.path.join(data_dir, "val"),
+            transform=get_val_transforms(),
             seq_len=seq_len
         )
 
@@ -165,13 +170,13 @@ class Trainer:
             train_dataset,
             batch_size=self.train_config["batch_size"],
             shuffle=True,
-            num_workers=4
+            num_workers=num_workers
         )
         val_loader = DataLoader(
             val_dataset,
             batch_size=self.train_config["batch_size"],
             shuffle=False,
-            num_workers=4
+            num_workers=num_workers
         )
 
         return train_loader, val_loader
@@ -214,7 +219,7 @@ class Trainer:
             running_loss += loss.item()
 
             # Current LR from the scheduler
-            current_lr = self.scheduler.get_last_lr()[0]
+            current_lr = self.optimizer.param_groups[0]["lr"]
 
             if batch_idx % self.train_config["log_interval"] == 0:
                 accuracy = 100.0 * correct_predictions / total_predictions
@@ -315,7 +320,7 @@ class Trainer:
 
             # Log validation metrics to wandb if enabled
             if self.use_wandb:
-                current_lr = self.scheduler.get_last_lr()[0]
+                current_lr = self.optimizer.param_groups[0]["lr"]
                 wandb.log({
                     "val_loss": val_loss,
                     "val_accuracy": val_accuracy,
@@ -333,22 +338,42 @@ class Trainer:
                     break
 
 
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments for model training.
+    """
+    parser = argparse.ArgumentParser(
+        description="Train the multiview action recognition model."
+    )
+    parser.add_argument(
+        "--config",
+        default=os.path.join("configs", "default.yaml"),
+        help="Path to the YAML configuration file.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """
     Main entry point for training the multiview action recognition model.
     """
+    args = parse_args()
+
     # Default configuration with separate 'model' and 'train' sections
     default_config = {
         "model": {
             "num_heads": 4,
+            "pretrained_spatial_feature_extractor": True,
             "num_transformer_layers": 2,
-            "num_classes": 10,
+            "num_classes": 6,
         },
         "train": {
             "batch_size": 8,
             "num_epochs": 50,
             "learning_rate": 1e-4,
             "seq_len": 50,
+            "data_dir": "data/processed",
+            "num_workers": 4,
             "log_interval": 10,
             "wandb": "no",
             "early_stopping": "no",
@@ -364,8 +389,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     # Load config from YAML
-    yaml_path = "config.yaml"
-    config = load_config(yaml_path, default_config, logger)
+    config = load_config(args.config, default_config, logger)
 
     # Create a unique run directory
     run_dir = create_run_directory(base_dir=config["train"]["output_dir"])

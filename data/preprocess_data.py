@@ -1,7 +1,9 @@
-import os
 import argparse
+import os
+
 from src.utils.preprocess_data_utils import (
-    organize_actions, stratified_split_dataset
+    organize_actions,
+    stratified_split_dataset,
 )
 
 
@@ -14,8 +16,9 @@ def parse_arguments():
     argparse.Namespace
         Parsed command-line arguments.
     """
-    parser = argparse.ArgumentParser(description="Preprocess dataset \
-                                     for training.")
+    parser = argparse.ArgumentParser(
+        description="Preprocess the multiview action dataset for training."
+    )
 
     parser.add_argument(
         "--source_dir", type=str, required=True,
@@ -37,10 +40,6 @@ def parse_arguments():
         "--test_pct", type=float, default=0.15,
         help="Fraction of data used for testing (default: 0.15)."
     )
-    parser.add_argument(
-        "--config", type=str, default=os.path.join('configs', 'custom.yaml'),
-        help="Path to an optional configuration file for other settings."
-    )
 
     return parser.parse_args()
 
@@ -55,7 +54,7 @@ def main():
 
     # Define annotations file path (one level above source_dir)
     action_labels_csv = os.path.join(
-        os.path.dirname(args.source_dir), 'annotations', 'action_labels.csv'
+        os.path.dirname(args.source_dir), "annotations", "action_labels.csv"
     )
 
     print("Organizing actions into folders...")

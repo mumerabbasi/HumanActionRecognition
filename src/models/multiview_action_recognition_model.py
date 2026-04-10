@@ -6,8 +6,9 @@ from src.models.transformer_encoder_temporal import TemporalTransformerBlock
 
 class MultiviewActionRecognitionModel(nn.Module):
     """
-    Multiview Action Recognition Model using EfficientNetV2, Multi-Head
-    Attention on views, and Transformer Encoder for temporal modeling.
+    Multiview action recognition model using ResNet-50 spatial features,
+    multi-head attention on views, and a Transformer encoder for temporal
+    modeling.
 
     Parameters
     ----------
@@ -19,11 +20,14 @@ class MultiviewActionRecognitionModel(nn.Module):
     num_transformer_layers : int, optional
         Number of Transformer layers (default is 2).
     num_classes : int, optional
-        Number of output classes (default is 10).
+        Number of output classes (default is 6).
     """
     def __init__(
-        self, num_heads=4, pretrained_spatial_feature_extractor=True,
-        num_transformer_layers=2, num_classes=10
+        self,
+        num_heads=4,
+        pretrained_spatial_feature_extractor=True,
+        num_transformer_layers=2,
+        num_classes=6,
     ):
         super(MultiviewActionRecognitionModel, self).__init__()
 

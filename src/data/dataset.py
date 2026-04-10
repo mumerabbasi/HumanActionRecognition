@@ -1,9 +1,10 @@
+import glob
 import os
+
 import torch
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from PIL import Image
-import glob
 
 
 class MultiviewActionDataset(Dataset):
@@ -21,11 +22,15 @@ class MultiviewActionDataset(Dataset):
         Fixed length for sequences. If None, the original sequence length is
         used (default is None).
     """
+
     def __init__(self, data_dir, transform=None, seq_len=None):
         self.data_dir = data_dir
         self.transform = transform
         self.seq_len = seq_len
-        self.actions = sorted(os.listdir(data_dir))
+        self.actions = sorted(
+            action for action in os.listdir(data_dir)
+            if os.path.isdir(os.path.join(data_dir, action))
+        )
         self.num_classes = len(self.actions)
 
         # Create a mapping from action labels (strings) to integers
@@ -48,7 +53,10 @@ class MultiviewActionDataset(Dataset):
             sequences = sorted(os.listdir(action_dir))
             for seq in sequences:
                 seq_dir = os.path.join(action_dir, seq)
-                views = sorted(glob.glob(os.path.join(seq_dir, '*')))
+                views = sorted(
+                    view for view in glob.glob(os.path.join(seq_dir, "*"))
+                    if os.path.isdir(view)
+                )
                 data.append((action, seq, views))
         return data
 
@@ -80,12 +88,17 @@ class MultiviewActionDataset(Dataset):
         """
         images_per_view = []
         for view_path in view_paths:
-            frames = sorted(glob.glob(os.path.join(view_path, '*.jpg')))
+            frames = sorted(glob.glob(os.path.join(view_path, "*.jpg")))
             if self.seq_len and self.seq_len <= len(frames):
                 frames = frames[:self.seq_len]
-            images = [Image.open(frame) for frame in frames]
-            images = [self.transform(image) if self.transform
-                      else transforms.ToTensor()(image) for image in images]
+            images = []
+            for frame in frames:
+                with Image.open(frame) as image:
+                    image = image.convert("RGB")
+                    if self.transform:
+                        images.append(self.transform(image))
+                    else:
+                        images.append(transforms.ToTensor()(image))
             images_per_view.append(torch.stack(images))
         return torch.stack(images_per_view, dim=0)
 
@@ -106,7 +119,7 @@ class MultiviewActionDataset(Dataset):
                 (num_views, seq_len, C, H, W).
                 - torch.Tensor: Corresponding action index.
         """
-        action, seq, view_paths = self.data[idx]
+        action, _seq, view_paths = self.data[idx]
         views = self._load_images(view_paths)
         action_idx = torch.tensor(self.action_to_idx[action])
         return views, action_idx
