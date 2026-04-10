@@ -31,8 +31,6 @@ Spatio-temporal action recognition for furniture assembly using synchronized mul
 
 https://github.com/user-attachments/assets/1338eb24-245e-4dfc-b77d-1aadb9dfff61
 
-The local demo asset is kept in [`assets/HAU_demo.mp4`](assets/HAU_demo.mp4).
-
 ---
 
 ## What It Does
@@ -86,11 +84,6 @@ The model predicts a frame-sequence action label by:
         │  Furniture assembly prediction      │
         └─────────────────────────────────────┘
 ```
-
-The public model APIs are:
-
-- `SpatialFeatureExtractor(pretrained=True)`
-- `MultiviewActionRecognitionModel(...)`
 
 ---
 
